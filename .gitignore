@@ -4,3 +4,4 @@
 .Ruserdata
 data/
 renv/library/
+.DS_Store
