@@ -91,7 +91,7 @@ firmsize_avg <- df_long %>%
 income_avg <- df_long %>%
   filter(Variable == "Bruttoverdienst") %>%
   group_by(NUTSCODE) %>%
-  summarise(Bruttoverdienst = mean(Wert, na.rm = TRUE) * 10, .groups = "drop")
+  summarise(Bruttoverdienst = mean(Wert, na.rm = TRUE), .groups = "drop")
 
 sector_avg <- df_long %>%
   filter(Variable %in% c("Anteil Erwerbstätige Verarbeitendes Gewerbe an Industrie",
@@ -105,7 +105,7 @@ sector_avg <- df_long %>%
            (`Anteil Erwerbstätige Verarbeitendes Gewerbe an Industrie` *
               `Erwerbstätige Sekundärer Sektor`) / 10000) %>%
   group_by(NUTSCODE) %>%
-  summarise(Sector_kombiniert = mean(Sector_kombiniert, na.rm = TRUE), .groups = "drop")
+  summarise(Sector_kombiniert = mean(Sector_kombiniert, na.rm = TRUE) * 10, .groups = "drop")
 
 df_hetero <- firmsize_avg %>%
   left_join(income_avg, by = "NUTSCODE") %>%
