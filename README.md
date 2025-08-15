@@ -20,5 +20,16 @@
 
 **Hinweis:** Die Originaldaten sind nicht Teil dieses Repositories und müssen aus den genannten Quellen bezogen werden.
 
+### Reproduzierbare Umgebung
+
+Dieses Projekt verwendet [renv](https://rstudio.github.io/renv/) zur Verwaltung der R-Paketversionen.  
+Alle erforderlichen Pakete und deren Versionen sind in der Datei `renv.lock` dokumentiert.  
+Um die Projektumgebung wiederherzustellen, im Projektordner in R ausführen:
+
+```r
+install.packages("renv")
+renv::restore()
+```
+
 [^1]: Bundesinstitut für Bau-, Stadt- und Raumforschung (BBSR). (2022). _INKAR: Indikatoren und Karten zur Raum- und Stadtentwicklung_ \[Online-Datenbank. BBSR Bonn\]
 [^2]: Jarociński, M., & Karadi, P. (2020). Deconstructing Monetary Policy Surprises - The Role of Information Shocks. _American Economic Journal: Macroeconomics, 12(2)_. DOI: [10.1257/mac.20180090](http://doi.org/10.1257/mac.20180090)
