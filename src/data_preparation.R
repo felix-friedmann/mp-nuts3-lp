@@ -86,12 +86,12 @@ df_long <- df_long %>% filter(Jahr >= jahr_min, Jahr <= jahr_max)
 firmsize_avg <- df_long %>%
   filter(Variable == "Großunternehmen") %>%
   group_by(NUTSCODE) %>%
-  summarise(Großunternehmen = mean(Wert, na.rm = TRUE), .groups = "drop")
+  summarise(Großunternehmen = mean(Wert, na.rm = TRUE) * 10, .groups = "drop")
 
 income_avg <- df_long %>%
   filter(Variable == "Bruttoverdienst") %>%
   group_by(NUTSCODE) %>%
-  summarise(Bruttoverdienst = mean(Wert, na.rm = TRUE), .groups = "drop")
+  summarise(Bruttoverdienst = mean(Wert, na.rm = TRUE) * 10, .groups = "drop")
 
 sector_avg <- df_long %>%
   filter(Variable %in% c("Anteil Erwerbstätige Verarbeitendes Gewerbe an Industrie",
@@ -175,13 +175,11 @@ shocks <- shocks %>%
 shocks_yearly <- shocks %>%
   group_by(year) %>%
   summarise(
-    MP_median = sum(MP_median, na.rm = TRUE)
+    MP_median = sum(MP_median * 100, na.rm = TRUE)
   )
 
-shocks_yearly$MP_median = shocks_yearly$MP_median * 100
-
 df_shocks <- shocks_yearly %>%
-  mutate(shocks_std = ((MP_median - mean(MP_median, na.rm = TRUE)) / sd(MP_median, na.rm = TRUE)) * 25) %>%
+  mutate(shocks_std = ((MP_median - mean(MP_median, na.rm = TRUE)) / 100)) %>%
   select(year, shocks_std) %>%
   rename(YEAR = year)
 

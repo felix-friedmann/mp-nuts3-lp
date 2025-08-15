@@ -1,7 +1,5 @@
 library(dplyr)
 library(fixest)
-library(fwildclusterboot)
-library(rlang)
 
 # =============== Settings =============== #
 # Beschäftigung ->                 SNETD_log
@@ -19,49 +17,43 @@ heteroVar <- "GU_Value"
 controlVar <- "GVA_log"
 # ======================================== #
 
-tvar <- sym(target)
+lagVar <- paste0(target, "_lag1")
 
 tmp <- panel %>%
-  arrange(NUTSCODE, YEAR) %>%
   group_by(NUTSCODE) %>%
-  mutate(lag_target = lag( !!tvar, 1 )) %>%
-  ungroup()
+  arrange(YEAR, .by_group = TRUE) %>%
+  mutate(!!lagVar := lag(.data[[target]], n = 1))
 
-for(h in 0:H){
-  tmp <- tmp %>%
-    arrange(NUTSCODE, YEAR) %>%
-    group_by(NUTSCODE) %>%
-    mutate( !!paste0("target_h", h) := lead( !!tvar, h ) ) %>%
-    ungroup()
-}
-
-tmp <- tmp %>%
-  mutate(
-    YEAR_FE = as.factor(YEAR),
-    YEAR_CL = YEAR
-  )
+IQR_H <- as.numeric(
+  quantile(tmp$EN_Value, 0.9, na.rm=TRUE) -
+  quantile(tmp$EN_Value, 0.1, na.rm=TRUE)
+)
 
 for(h in 0:H) {
-
-  fml <- as.formula(sprintf(
-    "target_h%d ~ shocks_std:%s + %s + lag_target",
-    h, heteroVar, controlVar
+  
+  leadVar <- "y_lead"
+  
+  tmp <- tmp %>%
+    group_by(NUTSCODE) %>%
+    arrange(YEAR, .by_group = TRUE) %>%
+    mutate(!!leadVar := lead(.data[[target]], n = h))
+  
+  fml <- as.formula(
+    paste0(leadVar, " ~ shocks_std:", heteroVar, " + ", controlVar, " + ", lagVar,
+      " | NUTSCODE + YEAR"
+    )
+  )
+  
+  mod <- feols(fml, data = tmp)
+  
+  coef_name <- paste0("shocks_std:", heteroVar)
+  beta <- coef(mod)[coef_name]
+  diff <- beta * IQR_H
+  
+  print(paste0(
+    "h = ", h,
+    " | gamma = ", beta,
+    " | diff = ", diff,
+    " | ", ifelse(beta > 0, "oben stärker", "unten stärker")
   ))
-  
-  mod <- feols(
-    fml,
-    data  = tmp,
-    fixef = c("NUTSCODE", "YEAR_FE")
-  )
-
-  wcb <- boottest(
-    mod,
-    clustid = "YEAR_CL",
-    param = paste0("shocks_std:", heteroVar),
-    B = 9999
-  )
-  
-  print(h)
-  print(wcb)
 }
-
