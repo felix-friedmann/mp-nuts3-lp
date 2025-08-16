@@ -52,7 +52,7 @@ for(h in 0:H) {
   
   print(paste0(
     "h = ", h,
-    " | gamma = ", beta,
+    " | beta = ", beta,
     " | diff = ", diff,
     " | ", ifelse(beta > 0, "oben stärker", "unten stärker")
   ))

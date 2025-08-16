@@ -62,11 +62,16 @@ for(h in 0:H) {
     mod,
     clustid = "YEAR_CL",
     param = paste0("shocks_std:", heteroVar),
-    B = 10000
+    sign_level = 0.10,
+    B = 9999
   )
+  
+  mult = ifelse(heteroVar == "EN_Value", 1, 100)
 
-  print(h)
-  print(wcb)
-  print(coef(mod)[paste0("shocks_std:", heteroVar)]
-)
+  print(paste0(
+    "h = ", h,
+    " | beta = ", round(wcb$point_estimate * mult, 4),
+    "% | p = ", round(wcb$p_val, 4),
+    " | ci = [", round(wcb$conf_int[1] * mult, 4), ", ", round(wcb$conf_int[2] * mult, 4), "]"
+  ))
 }

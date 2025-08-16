@@ -20,11 +20,13 @@
 
 **Hinweis:** Urheber- und Nutzungsrechte liegen bei den Originalanbietern. Über dieses Repository werden keine Originaldaten zur Verfügung gestellt.
 
+---
+
 ### Reproduzierbare Umgebung
 
 Dieses Projekt verwendet [renv](https://rstudio.github.io/renv/) zur Verwaltung der R-Paketversionen.  
 Alle erforderlichen Pakete und deren Versionen sind in der Datei `renv.lock` dokumentiert.  
-Um die Projektumgebung wiederherzustellen, im Projektordner in R ausführen:
+Um die Projektumgebung wiederherzustellen, folgendes im Projektordner in R ausführen:
 
 ```r
 install.packages("renv")
