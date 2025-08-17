@@ -15,6 +15,9 @@ H <- 4
 target <- "SNETD_log" 
 heteroVar <- "GU_Value"
 controlVar <- "GVA_log"
+upper <- 0.9
+lower <- 0.1
+squared <- FALSE
 # ======================================== #
 
 lagVar <- paste0(target, "_lag1")
@@ -24,10 +27,9 @@ tmp <- panel %>%
   arrange(YEAR, .by_group = TRUE) %>%
   mutate(!!lagVar := lag(.data[[target]], n = 1))
 
-IQR_H <- as.numeric(
-  quantile(tmp[[heteroVar]], 0.9, na.rm=TRUE) -
-  quantile(tmp[[heteroVar]], 0.1, na.rm=TRUE)
-)
+x <- tmp[[heteroVar]]
+IQR_1 <- as.numeric(mean(x[x <= quantile(x, lower, na.rm = TRUE)], na.rm = TRUE))
+IQR_2 <- as.numeric(mean(x[x >= quantile(x, upper, na.rm = TRUE)], na.rm = TRUE))
 
 results <- list()
 
@@ -46,18 +48,28 @@ for(h in 0:H) {
     )
   )
   
-  mod <- feols(fml, data = tmp)
+  fml2 <- as.formula(
+    paste0(leadVar, " ~ shocks_std:", heteroVar, " + shocks_std:I(", heteroVar, "^2) + ", controlVar, " + ", lagVar,
+           " | NUTSCODE + YEAR"
+    )
+  )
   
-  coef_name <- paste0("shocks_std:", heteroVar)
-  beta <- coef(mod)[coef_name]
-  diff <- beta * IQR_H
+  reg <- if(squared) fml2 else fml
+  mod <- feols(reg, data = tmp)
+  
+  beta <- coef(mod)[paste0("shocks_std:", heteroVar)]
+  sq <- ifelse(squared, coef(mod)[paste0("shocks_std:I(", heteroVar, "^2)")], 0)
+  diff <- (IQR_2 - IQR_1) * (beta + sq * (IQR_1 + IQR_2))
+  
   mult = ifelse(heteroVar == "EN_Value", 1, 100)
   
   results[[length(results) + 1]] <- data.frame(
     h = h,
     beta = paste0(round(beta * mult, 4), " %"),
-    diff = paste0(round(diff * mult, 4), " Pp"),
-    sign = ifelse(beta > 0, "oben stärker", "unten stärker")
+    diff = paste0(round(diff * mult, 4), " %"),
+    sign = ifelse(diff > 0, "oben stärker", "unten stärker"),
+    sq = ifelse(squared, round(sq * mult, 4), "NA"),
+    R2 = paste0(round(r2(mod, type = "wr2") * 100, 2), " %")
   )
 }
 
