@@ -25,9 +25,11 @@ tmp <- panel %>%
   mutate(!!lagVar := lag(.data[[target]], n = 1))
 
 IQR_H <- as.numeric(
-  quantile(tmp$EN_Value, 0.9, na.rm=TRUE) -
-  quantile(tmp$EN_Value, 0.1, na.rm=TRUE)
+  quantile(tmp[[heteroVar]], 0.9, na.rm=TRUE) -
+  quantile(tmp[[heteroVar]], 0.1, na.rm=TRUE)
 )
+
+results <- list()
 
 for(h in 0:H) {
   
@@ -49,11 +51,16 @@ for(h in 0:H) {
   coef_name <- paste0("shocks_std:", heteroVar)
   beta <- coef(mod)[coef_name]
   diff <- beta * IQR_H
+  mult = ifelse(heteroVar == "EN_Value", 1, 100)
   
-  print(paste0(
-    "h = ", h,
-    " | beta = ", beta,
-    " | diff = ", diff,
-    " | ", ifelse(beta > 0, "oben stärker", "unten stärker")
-  ))
+  results[[length(results) + 1]] <- data.frame(
+    h = h,
+    beta = paste0(round(beta * mult, 4), " %"),
+    diff = paste0(round(diff * mult, 4), " Pp"),
+    sign = ifelse(beta > 0, "oben stärker", "unten stärker")
+  )
 }
+
+results_df <- do.call(rbind, results)
+rownames(results_df) <- NULL
+print(results_df)

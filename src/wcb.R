@@ -19,44 +19,37 @@ heteroVar <- "GU_Value"
 controlVar <- "GVA_log"
 # ======================================== #
 
-tvar <- sym(target)
+lagVar <- paste0(target, "_lag1")
 
 tmp <- panel %>%
-  arrange(NUTSCODE, YEAR) %>%
   group_by(NUTSCODE) %>%
-  mutate(lag_target = lag(!!tvar, 1)) %>%
-  ungroup()
-
-for(h in 0:H){
-  tmp <- tmp %>%
-    arrange(NUTSCODE, YEAR) %>%
-    group_by(NUTSCODE) %>%
-    mutate(!!paste0("target_h", h) := lead(!!tvar, h)) %>%
-    ungroup()
-}
-
-tmp <- tmp %>%
+  arrange(YEAR, .by_group = TRUE) %>%
   mutate(
+    !!lagVar := lag(.data[[target]], n = 1),
     YEAR_FE = as.factor(YEAR),
     YEAR_CL = YEAR
   )
 
-target_cols <- paste0("target_h", 0:4)
-keep <- complete.cases(tmp[, c(target_cols, "lag_target", controlVar, heteroVar, "shocks_std")])
-tmp_consistent <- tmp[keep, ]
+dqrng::dqset.seed(10)
+results <- list()
 
 for(h in 0:H) {
-
-  fml <- as.formula(sprintf(
-    "target_h%d ~ shocks_std:%s + %s + lag_target",
-    h, heteroVar, controlVar
-  ))
-
-  mod <- feols(
-    fml,
-    data  = tmp,
-    fixef = c("NUTSCODE", "YEAR_FE")
+  
+  leadVar <- "y_lead"
+  
+  tmp <- tmp %>%
+    group_by(NUTSCODE) %>%
+    arrange(YEAR, .by_group = TRUE) %>%
+    mutate(!!leadVar := lead(.data[[target]], n = h))
+  
+  
+  fml <- as.formula(
+    paste0(leadVar, " ~ shocks_std:", heteroVar, " + ", controlVar, " + ", lagVar,
+           " | NUTSCODE + YEAR_FE"
+    )
   )
+  
+  mod <- feols(fml, data = tmp)
 
   wcb <- boottest(
     mod,
@@ -68,10 +61,14 @@ for(h in 0:H) {
   
   mult = ifelse(heteroVar == "EN_Value", 1, 100)
 
-  print(paste0(
-    "h = ", h,
-    " | beta = ", round(wcb$point_estimate * mult, 4),
-    "% | p = ", round(wcb$p_val, 4),
-    " | ci = [", round(wcb$conf_int[1] * mult, 4), ", ", round(wcb$conf_int[2] * mult, 4), "]"
-  ))
+  results[[length(results) + 1]] <- data.frame(
+    h = h,
+    beta = paste0(round(wcb$point_estimate * mult, 4), "%"),
+    p = round(wcb$p_val, 4),
+    ci = paste0("[", round(wcb$conf_int[1] * mult, 4), ", ", round(wcb$conf_int[2] * mult, 4), "]")
+  )
 }
+
+results_df <- do.call(rbind, results)
+rownames(results_df) <- NULL
+print(results_df)
