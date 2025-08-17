@@ -1,0 +1,66 @@
+library(dplyr)
+library(plm)
+library(lmtest)
+
+# =============== Settings =============== #
+# Beschäftigung ->                 SNETD_log
+# Reallöhne ->                    ROWCDW_log
+# Anteil Großunternehmen ->         GU_Value
+# Anteil verarbeitendes Gewerbe ->  SS_Value
+# Einkommensniveau ->               EN_Value
+# Bruttowertschöpfung ->             GVA_log
+# Bruttoinlandsprodukt ->            GDP_log
+# geldpolitische Schocks ->       shocks_std
+# ======================================== #
+H <- 4
+target <- "SNETD_log" 
+heteroVar <- "SS_Value"
+controlVar <- "GVA_log"
+# ======================================== #
+
+lagVar <- paste0(target, "_lag1")
+
+tmp3 <- panel %>%
+  group_by(NUTSCODE) %>%
+  arrange(YEAR, .by_group = TRUE) %>%
+  mutate(!!lagVar := dplyr::lag(.data[[target]], n = 1))
+
+results <- list()
+
+for(h in 0:H) {
+  
+  leadVar <- "y_lead"
+  
+  tmp3 <- tmp3 %>%
+    group_by(NUTSCODE) %>%
+    arrange(YEAR, .by_group = TRUE) %>%
+    mutate(!!leadVar := dplyr::lead(.data[[target]], n = h))
+  
+  fml <- as.formula(
+    paste0(leadVar, " ~ shocks_std:", heteroVar, " + ", controlVar, " + ", lagVar)
+  )
+  
+  mod <- plm(fml, data = tmp3, index = c("NUTSCODE", "YEAR"), model = "within", effect = "twoways")
+
+  vcov_dk <- vcovSCC(mod, type = "HC1", maxlag = 1)
+  res <- coeftest(mod, vcov. = vcov_dk)
+  
+  clust_region <- vcovHC(mod, method = "arellano", type = "HC1", cluster = "group")
+  ct_region <- coeftest(mod, vcov. = clust_region)
+  
+  clust_time <- vcovHC(mod, method = "arellano", type = "HC1", cluster = "time")
+  ct_time <- coeftest(mod, vcov. = clust_time)
+  
+  inter_name <- paste0("shocks_std:", heteroVar)
+  
+  results[[length(results) + 1]] <- data.frame(
+    h = h,
+    p_dk = unname(res[inter_name, "Pr(>|t|)"]),
+    p_cr = unname(ct_region[inter_name, "Pr(>|t|)"]),
+    p_ct = unname(ct_time[inter_name, "Pr(>|t|)"]),
+    row.names = NULL
+  )
+}
+
+results <- do.call(rbind, results)
+print(results)

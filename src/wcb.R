@@ -21,11 +21,11 @@ controlVar <- "GVA_log"
 
 lagVar <- paste0(target, "_lag1")
 
-tmp <- panel %>%
+tmp2 <- panel %>%
   group_by(NUTSCODE) %>%
   arrange(YEAR, .by_group = TRUE) %>%
   mutate(
-    !!lagVar := lag(.data[[target]], n = 1),
+    !!lagVar := dplyr::lag(.data[[target]], n = 1),
     YEAR_FE = as.factor(YEAR),
     YEAR_CL = YEAR
   )
@@ -37,10 +37,10 @@ for(h in 0:H) {
   
   leadVar <- "y_lead"
   
-  tmp <- tmp %>%
+  tmp2 <- tmp2 %>%
     group_by(NUTSCODE) %>%
     arrange(YEAR, .by_group = TRUE) %>%
-    mutate(!!leadVar := lead(.data[[target]], n = h))
+    mutate(!!leadVar := dplyr::lead(.data[[target]], n = h))
   
   
   fml <- as.formula(
@@ -49,7 +49,7 @@ for(h in 0:H) {
     )
   )
   
-  mod <- feols(fml, data = tmp)
+  mod <- feols(fml, data = tmp2)
 
   wcb <- boottest(
     mod,

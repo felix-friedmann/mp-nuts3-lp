@@ -25,7 +25,7 @@ lagVar <- paste0(target, "_lag1")
 tmp <- panel %>%
   group_by(NUTSCODE) %>%
   arrange(YEAR, .by_group = TRUE) %>%
-  mutate(!!lagVar := lag(.data[[target]], n = 1))
+  mutate(!!lagVar := dplyr::lag(.data[[target]], n = 1))
 
 x <- tmp[[heteroVar]]
 IQR_1 <- as.numeric(mean(x[x <= quantile(x, lower, na.rm = TRUE)], na.rm = TRUE))
@@ -40,7 +40,7 @@ for(h in 0:H) {
   tmp <- tmp %>%
     group_by(NUTSCODE) %>%
     arrange(YEAR, .by_group = TRUE) %>%
-    mutate(!!leadVar := lead(.data[[target]], n = h))
+    mutate(!!leadVar := dplyr::lead(.data[[target]], n = h))
   
   fml <- as.formula(
     paste0(leadVar, " ~ shocks_std:", heteroVar, " + ", controlVar, " + ", lagVar,
