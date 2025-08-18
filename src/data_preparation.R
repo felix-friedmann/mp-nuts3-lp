@@ -126,7 +126,7 @@ df_gvaN <- ardeco_get_dataset_data(
   level = '3',
   year = '2000-2019',
   version = 2024,
-  unit = 'Million EUR2020'
+  unit = 'MIO_EUR2020'
 )
 
 df_pop <- ardeco_get_dataset_data(
@@ -170,19 +170,22 @@ shocks <- read_csv(here("data", "shocks_ecb_mpd_me_m.csv"))
 shocks <- shocks[, !names(shocks) %in% c("pc1_hf", "STOXX50_hf", "CBI_pm", "CBI_median")]
 
 shocks <- shocks %>%
-  filter(year <= 2019, year >= 2000)
+  filter(year <= 2019, year >= 2000) %>%
+  mutate(weight = 13 - month)
 
 shocks_yearly <- shocks %>%
   group_by(year) %>%
   summarise(
-    MP_median = sum(MP_median * 100, na.rm = TRUE)
+    MP_std = sum(MP_median * 100, na.rm = TRUE),
+    MP_weight = sum(MP_median * weight * 100) / sum(weight)
   )
 
 df_shocks <- shocks_yearly %>%
-  mutate(shocks_std = ((MP_median - mean(MP_median, na.rm = TRUE)) / 100)) %>%
-  select(year, shocks_std) %>%
+  mutate(shocks_std = ((MP_std - mean(MP_std, na.rm = TRUE)) / 100),
+         shocks_weighted = ((MP_weight - mean(MP_weight, na.rm = TRUE)) / 100)) %>%
+  select(year, shocks_std, shocks_weighted) %>%
   rename(YEAR = year)
-
+  
 # Zusammenfassen in ein Panel
 codes <- df_emp %>% distinct(NUTSCODE)
 years <- df_emp %>% distinct(YEAR)
