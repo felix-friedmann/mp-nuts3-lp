@@ -2,9 +2,7 @@
 
 `src/data_preparation.R` - Datenextraktion und -transformation.
 
-`src/analysis.R` - Grundlegende Schätzung der Koeffizienten und Differenzen zwischen Quantilen mithilfe des [fixest-Pakets](https://cran.r-project.org/web/packages/fixest/index.html).
-
-`src/wcb.R` - Schätzung von Konfidenzintervallen und p-Werten mit Wild Cluster Bootstrap über das Package [fwildclusterboot](https://github.com/s3alfisc/fwildclusterboot).
+`src/analysis.R` - Grundlegende Schätzung der Koeffizienten und Differenzen zwischen Quantilen mithilfe des [fixest-Pakets](https://cran.r-project.org/web/packages/fixest/index.html), Schätzung von Konfidenzintervallen und p-Werten mit Wild Cluster Bootstrap über das Package [fwildclusterboot](https://github.com/s3alfisc/fwildclusterboot).  
 
 `src/dak.R` - Schätzung von Konfidenzintervallen und p-Werten mit Driscoll and Kraay Standardfehlern über das fixest-package.
 
