@@ -14,7 +14,7 @@ library(lmtest)
 # ======================================== #
 H <- 4
 target <- "SNETD_log" 
-heteroVar <- "SS_Value"
+heteroVar <- "GU_Value"
 controlVar <- "GVA_log"
 # ======================================== #
 
@@ -45,9 +45,6 @@ for(h in 0:H) {
   vcov_dk <- vcovSCC(mod, type = "HC1", maxlag = 1)
   res <- coeftest(mod, vcov. = vcov_dk)
   
-  clust_region <- vcovHC(mod, method = "arellano", type = "HC1", cluster = "group")
-  ct_region <- coeftest(mod, vcov. = clust_region)
-  
   clust_time <- vcovHC(mod, method = "arellano", type = "HC1", cluster = "time")
   ct_time <- coeftest(mod, vcov. = clust_time)
   
@@ -55,9 +52,8 @@ for(h in 0:H) {
   
   results[[length(results) + 1]] <- data.frame(
     h = h,
-    p_dk = unname(res[inter_name, "Pr(>|t|)"]),
-    p_cr = unname(ct_region[inter_name, "Pr(>|t|)"]),
-    p_ct = unname(ct_time[inter_name, "Pr(>|t|)"]),
+    p_dk = round(unname(res[inter_name, "Pr(>|t|)"]), 4),
+    p_tc = round(unname(ct_time[inter_name, "Pr(>|t|)"]), 4),
     row.names = NULL
   )
 }

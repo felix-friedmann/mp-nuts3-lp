@@ -6,3 +6,4 @@ data/
 renv/library/
 .DS_Store
 test.R
+wcb.R

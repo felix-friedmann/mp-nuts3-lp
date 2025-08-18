@@ -69,6 +69,14 @@ for(h in 0:H) {
   )
 }
 
+
+avg_df <- results_df %>%
+  summarise(avg_b = mean(beta, na.rm = TRUE), .groups = "drop",
+            avg_d = mean(diff, na.rm = TRUE), .groups = "drop",
+            max_d = max(diff, na.rm = TRUE), .groups = "drop") %>%
+  select(avg_b, avg_d, max_d)
+
+
 results_df <- do.call(rbind, results)
 rownames(results_df) <- NULL
 print(results_df)
