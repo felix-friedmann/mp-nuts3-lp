@@ -11,19 +11,22 @@ library(lmtest)
 # Bruttowertschöpfung ->             GVA_log
 # Bruttoinlandsprodukt ->            GDP_log
 # geldpolitische Schocks ->       shocks_std
+# gewichtete Schocks ->      shocks_weighted
 # ======================================== #
 H <- 4
-target <- "SNETD_log" 
-heteroVar <- "GU_Value"
+target <- "ROWCDW_log" 
+heteroVar <- "EN_Value"
 controlVar <- "GVA_log"
 # ======================================== #
 
-lagVar <- paste0(target, "_lag1")
+lagVarT <- paste0(target, "_lag1")
+lagVarC <- paste0(controlVar, "_lag1")
 
-tmp3 <- panel %>%
+tmp <- panel %>%
   group_by(NUTSCODE) %>%
   arrange(YEAR, .by_group = TRUE) %>%
-  mutate(!!lagVar := dplyr::lag(.data[[target]], n = 1))
+  mutate(!!lagVarT := dplyr::lag(.data[[target]], n = 1),
+         !!lagVarC := dplyr::lag(.data[[controlVar]], n = 1))
 
 results <- list()
 
@@ -31,16 +34,17 @@ for(h in 0:H) {
   
   leadVar <- "y_lead"
   
-  tmp3 <- tmp3 %>%
+  tmp2 <- tmp %>%
     group_by(NUTSCODE) %>%
     arrange(YEAR, .by_group = TRUE) %>%
-    mutate(!!leadVar := dplyr::lead(.data[[target]], n = h))
+    mutate(!!leadVar := dplyr::lead(.data[[target]], n = h)) %>%
+    filter(!is.na(.data[[leadVar]]))
   
   fml <- as.formula(
-    paste0(leadVar, " ~ shocks_std:", heteroVar, " + ", controlVar, " + ", lagVar)
+    paste0(leadVar, " ~ shocks_std:", heteroVar, " + ", lagVarC, " + ", lagVarT)
   )
   
-  mod <- plm(fml, data = tmp3, index = c("NUTSCODE", "YEAR"), model = "within", effect = "twoways")
+  mod <- plm(fml, data = tmp2, index = c("NUTSCODE", "YEAR"), model = "within", effect = "twoways")
 
   vcov_dk <- vcovSCC(mod, type = "HC1", maxlag = 1)
   res <- coeftest(mod, vcov. = vcov_dk)

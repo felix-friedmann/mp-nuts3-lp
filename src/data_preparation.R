@@ -171,13 +171,14 @@ shocks <- shocks[, !names(shocks) %in% c("pc1_hf", "STOXX50_hf", "CBI_pm", "CBI_
 
 shocks <- shocks %>%
   filter(year <= 2019, year >= 2000) %>%
-  mutate(weight = 13 - month)
+  mutate(weight = 13 - month,
+         MP_median = MP_median * 100)
 
 shocks_yearly <- shocks %>%
   group_by(year) %>%
   summarise(
-    MP_std = sum(MP_median * 100, na.rm = TRUE),
-    MP_weight = sum(MP_median * weight * 100) / sum(weight)
+    MP_std = sum(MP_median, na.rm = TRUE),
+    MP_weight = sum(MP_median * weight),
   )
 
 df_shocks <- shocks_yearly %>%
@@ -185,7 +186,7 @@ df_shocks <- shocks_yearly %>%
          shocks_weighted = ((MP_weight - mean(MP_weight, na.rm = TRUE)) / 100)) %>%
   select(year, shocks_std, shocks_weighted) %>%
   rename(YEAR = year)
-  
+
 # Zusammenfassen in ein Panel
 codes <- df_emp %>% distinct(NUTSCODE)
 years <- df_emp %>% distinct(YEAR)
