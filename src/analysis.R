@@ -17,10 +17,15 @@ H <- 4
 target <- "SNETD_log" 
 heteroVar <- "GU_Value"
 controlVar <- "GVA_log"
+# ======================================== #
+# alternative Wahl der Schockaggregation
 shockVar <- "shocks_std"
+# alternative Wahl der Gruppenunterschiede
 upper <- 0.9
 lower <- 0.1
+# zusätzliche quadrierte heteroVar
 squared <- FALSE
+# zwei Lags für Ziel-/Kontrollvariable
 doubleLagT <- FALSE
 doubleLagC <- FALSE
 # ======================================== #
@@ -30,6 +35,10 @@ lagVarT2 <- paste0(target, "_lag2")
 lagVarC <- paste0(controlVar, "_lag1")
 lagVarC2 <- paste0(controlVar, "_lag2")
 
+requiredLags <- c(lagVarT, lagVarC)
+if(doubleLagT) requiredLags <- c(requiredLags, lagVarT2)
+if(doubleLagC) requiredLags <- c(requiredLags, lagVarC2)
+
 tmp <- panel %>%
   group_by(NUTSCODE) %>%
   arrange(YEAR, .by_group = TRUE) %>%
@@ -38,7 +47,8 @@ tmp <- panel %>%
          !!lagVarC := dplyr::lag(.data[[controlVar]], n = 1),
          !!lagVarC2 := dplyr::lag(.data[[controlVar]], n = 2),
          YEAR_FE = as.factor(YEAR),
-         YEAR_CL = YEAR)
+         YEAR_CL = YEAR) %>%
+  drop_na(all_of(requiredLags))
 
 x <- tmp[[heteroVar]]
 IQR_1 <- as.numeric(mean(x[x <= quantile(x, lower, na.rm = TRUE)], na.rm = TRUE))
@@ -48,7 +58,9 @@ lagsT <- if(doubleLagT) paste0(lagVarT, " + ", lagVarT2) else paste0(lagVarT)
 lagsC <- if(doubleLagC) paste0(lagVarC, " + ", lagVarC2) else paste0(lagVarC)
 
 dqrng::dqset.seed(10)
+set.seed(10)
 results <- list()
+resultsSq <- list()
 
 for(h in 0:H) {
   
@@ -58,7 +70,7 @@ for(h in 0:H) {
     group_by(NUTSCODE) %>%
     arrange(YEAR, .by_group = TRUE) %>%
     mutate(!!leadVar := dplyr::lead(.data[[target]], n = h)) %>%
-    filter(!is.na(.data[[leadVar]]), !is.na(.data[[lagsT]]), !is.na(.data[[lagsC]]))
+    filter(!is.na(.data[[leadVar]]))
   
   fml <- as.formula(
     paste0(leadVar, " ~ ", shockVar, ":", heteroVar, " + ", lagsC, " + ", lagsT,
@@ -97,8 +109,30 @@ for(h in 0:H) {
     ci = paste0("[", round(wcb$conf_int[1] * mult, 4), ", ", round(wcb$conf_int[2] * mult, 4), "]"),
     p = round(wcb$p_val, 4)
   )
+  
+  if(squared) {
+    H10 <- quantile(tmp$EN_Value, 0.10, na.rm = TRUE)
+    H50 <- quantile(tmp$EN_Value, 0.50, na.rm = TRUE)
+    H90 <- quantile(tmp$EN_Value, 0.90, na.rm = TRUE)
+    
+    resultsSq[[length(resultsSq) + 1]] <- data.frame(
+      h = h,
+      ep = -beta / (2 * sq),
+      m10 = (beta * H10) + (sq * H10^2),
+      m50 = (beta * H50) + (sq * H50^2),
+      m90 = (beta * H90) + (sq * H90^2),
+      dm10 = beta + (2 * sq * H10),
+      dm90 = beta + (2 * sq * H90)
+    )
+  }
 }
 
 results_df <- do.call(rbind, results)
 rownames(results_df) <- NULL
 print(results_df)
+
+if(squared) {
+  resultsSq_df <- do.call(rbind, resultsSq)
+  rownames(resultsSq_df) <- NULL
+  print(resultsSq_df)
+}

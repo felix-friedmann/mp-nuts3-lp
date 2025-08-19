@@ -171,8 +171,7 @@ shocks <- shocks[, !names(shocks) %in% c("pc1_hf", "STOXX50_hf", "CBI_pm", "CBI_
 
 shocks <- shocks %>%
   filter(year <= 2019, year >= 2000) %>%
-  mutate(weight = 13 - month,
-         MP_median = MP_median * 100)
+  mutate(weight = 13 - month)
 
 shocks_yearly <- shocks %>%
   group_by(year) %>%
@@ -182,8 +181,8 @@ shocks_yearly <- shocks %>%
   )
 
 df_shocks <- shocks_yearly %>%
-  mutate(shocks_std = ((MP_std - mean(MP_std, na.rm = TRUE)) / 100),
-         shocks_weighted = ((MP_weight - mean(MP_weight, na.rm = TRUE)) / 100)) %>%
+  mutate(shocks_std = (MP_std - mean(MP_std, na.rm = TRUE)),
+         shocks_weighted = (MP_weight - mean(MP_weight, na.rm = TRUE))) %>%
   select(year, shocks_std, shocks_weighted) %>%
   rename(YEAR = year)
 
