@@ -134,5 +134,7 @@ print(results_df)
 if(squared) {
   resultsSq_df <- do.call(rbind, resultsSq)
   rownames(resultsSq_df) <- NULL
+  resultsSq_df$diff10 <- resultsSq_df$m10 - resultsSq_df$m50
+  resultsSq_df$diff90 <- resultsSq_df$m90 - resultsSq_df$m50
   print(resultsSq_df)
 }
