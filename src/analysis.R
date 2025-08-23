@@ -1,5 +1,6 @@
 library(dplyr)
 library(fixest)
+library(tidyr)
 library(fwildclusterboot)
 
 # =============== Settings =============== #
@@ -103,11 +104,12 @@ for(h in 0:H) {
   results[[length(results) + 1]] <- data.frame(
     h = h,
     beta = paste0(round(beta * mult, 4), " %"),
-    diff = paste0(round(diff * mult, 4), " %"),
-    sq = ifelse(squared, round(sq * mult, 4), "NA"),
-    R2 = paste0(round(r2(mod, type = "wr2") * 100, 2), " %"),
     ci = paste0("[", round(wcb$conf_int[1] * mult, 4), ", ", round(wcb$conf_int[2] * mult, 4), "]"),
-    p = round(wcb$p_val, 4)
+    diff = paste0(round(diff * mult, 4), " %"),
+    ci_diff = paste0("[", round(wcb$conf_int[1] * mult * (IQR_2 - IQR_1), 4), ", ", round(wcb$conf_int[2] * mult * (IQR_2 - IQR_1), 4), "]"),
+    p = round(wcb$p_val, 4),
+    R2 = paste0(round(r2(mod, type = "wr2") * 100, 2), " %"),
+    sq = ifelse(squared, round(sq * mult, 4), "NA")
   )
   
   if(squared) {

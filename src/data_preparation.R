@@ -177,7 +177,7 @@ shocks_yearly <- shocks %>%
   group_by(year) %>%
   summarise(
     MP_std = sum(MP_median, na.rm = TRUE),
-    MP_weight = sum(MP_median * weight),
+    MP_weight = sum(MP_median * weight, na.rm = TRUE),
   )
 
 df_shocks <- shocks_yearly %>%
