@@ -19,6 +19,7 @@ target <- "SNETD_log"
 heteroVar <- "GU_Value"
 controlVar <- "GVA_log"
 # ======================================== #
+# Robustheit:
 # alternative Wahl der Schockaggregation
 shockVar <- "shocks_std"
 # alternative Wahl der Gruppenunterschiede
@@ -92,7 +93,7 @@ for(h in 0:H) {
     mod,
     clustid = "YEAR_CL",
     param = paste0(shockVar, ":", heteroVar),
-    sign_level = 0.10,
+    sign_level = 0.1,
     B = 9999
   )
   

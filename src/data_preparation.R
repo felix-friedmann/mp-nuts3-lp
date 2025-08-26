@@ -77,22 +77,22 @@ df_lau_clean <- df_lau %>%
 
 df_long <- df_long %>%
   left_join(df_lau_clean, by = "Kennziffer") %>%
-  filter(!is.na(NUTSCODE)) %>%
+  filter(!is.na(NUTSCODE), Jahr >= 2000, Jahr <= 2019) %>%
   select(NUTSCODE, Variable, Jahr, Wert)
 
-jahr_min <- 2000; jahr_max <- 2019
-df_long <- df_long %>% filter(Jahr >= jahr_min, Jahr <= jahr_max)
-
+# Anteil Großunternehmen
 firmsize_avg <- df_long %>%
   filter(Variable == "Großunternehmen") %>%
   group_by(NUTSCODE) %>%
   summarise(Großunternehmen = mean(Wert, na.rm = TRUE) * 10, .groups = "drop")
 
+# Durchschnittlicher Bruttoverdienst
 income_avg <- df_long %>%
   filter(Variable == "Bruttoverdienst") %>%
   group_by(NUTSCODE) %>%
   summarise(Bruttoverdienst = mean(Wert, na.rm = TRUE), .groups = "drop")
 
+# Anteil verarbeitendes Gewerbe
 sector_avg <- df_long %>%
   filter(Variable %in% c("Anteil Erwerbstätige Verarbeitendes Gewerbe an Industrie",
                          "Erwerbstätige Sekundärer Sektor")) %>%

@@ -14,8 +14,8 @@ library(lmtest)
 # gewichtete Schocks ->      shocks_weighted
 # ======================================== #
 H <- 4
-target <- "ROWCDW_log" 
-heteroVar <- "EN_Value"
+target <- "SNETD_log" 
+heteroVar <- "GU_Value"
 controlVar <- "GVA_log"
 # ======================================== #
 
